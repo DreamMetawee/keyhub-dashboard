@@ -1,0 +1,180 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ตรวจสอบให้แน่ใจว่า provider เป็น "mysql" และ url ถูกต้อง
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------
+// ตารางสำหรับ ระบบผู้ใช้ (Register/Login)
+// ------------------------------------
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  password         String // รหัสผ่านที่ถูก hash แล้ว
+  name             String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // ความสัมพันธ์กับตารางอื่น ๆ
+  subscriptions    Subscription[]
+  carts            Cart[]
+  orders           Order[]
+  productInterests ProductInterest[]
+}
+
+// ------------------------------------
+// ตารางสำหรับ ระบบสมัครสมาชิก (Subscription)
+// ------------------------------------
+model SubscriptionPlan {
+  id           String         @id @default(uuid())
+  name         String         @unique
+  price        Float
+  durationInDays Int // ระยะเวลาของแพลน (เป็นวัน)
+  details      String?
+  
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  startDate DateTime @default(now())
+  endDate   DateTime
+  status    String   @default("Active") // สถานะ: "Active", "Expired", "Cancelled"
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  planId    String
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id])
+}
+
+// ------------------------------------
+// ตารางสำหรับ ร้านค้าออนไลน์ขายเกมคีย์
+// ------------------------------------
+model Game {
+  id            Int      @id @default(autoincrement())
+  title         String
+  slug          String   @unique // ใช้สำหรับ URL
+  price         Float
+  discount      Float    @default(0)
+  imageUrl      String
+  category      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  gameKeys          GameKey[]
+  cartItems         CartItem[] // ปรับแก้
+  orderItems        OrderItem[] // ปรับแก้
+  productInterests  ProductInterest[] // ปรับแก้
+}
+
+model GameKey {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  status    String   @default("Available") // สถานะ: "Available", "Sold"
+  
+  gameId    Int
+  game      Game     @relation(fields: [gameId], references: [id])
+  
+  // เชื่อมโยงกับ OrderItem เมื่อคีย์ถูกขาย
+  orderItem OrderItem[]
+}
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String   @unique // แต่ละ user มีตะกร้าได้แค่ 1 ตะกร้า
+  user      User     @relation(fields: [userId], references: [id])
+  
+  items     CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+  
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  
+  gameId    Int
+  game      Game     @relation(fields: [gameId], references: [id])
+  
+  // ตรวจสอบว่าสินค้าชนิดเดียวกันไม่ถูกเพิ่มในตะกร้าซ้ำซ้อน
+  @@unique([cartId, gameId])
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  orderDate      DateTime    @default(now())
+  totalAmount    Float
+  status         String      @default("Pending") // เช่น: "Pending", "Processing", "Completed"
+  
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+
+  items          OrderItem[]
+
+  Payment Payment[]
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+  pricePaid Float // ราคาที่ลูกค้าจ่าย
+
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  gameId    Int
+  game      Game     @relation(fields: [gameId], references: [id])
+  
+  // การจัดการคีย์ที่ถูกขาย
+  gameKeyId String   @unique // แต่ละ OrderItem จะมี GameKey ได้แค่ 1 ตัว
+  gameKey   GameKey  @relation(fields: [gameKeyId], references: [id])
+}
+
+// ------------------------------------
+// ตารางสำหรับ การตลาดดิจิทัล (Digital Marketing)
+// ------------------------------------
+model EmailSubscriber {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  subscribedAt DateTime @default(now())
+  source       String? // เช่น: "Homepage", "CheckoutPage"
+}
+
+model ProductInterest {
+  id           String   @id @default(uuid())
+  interestType String   // ประเภทความสนใจ: "Viewed", "AddedToCart", "Purchased"
+
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  
+  gameId       Int
+  game         Game     @relation(fields: [gameId], references: [id])
+
+  createdAt    DateTime @default(now())
+}
+model Payment {
+  id          String   @id @default(uuid())
+  orderId     String   @unique // เชื่อมกับคำสั่งซื้อ
+  order       Order    @relation(fields: [orderId], references: [id])
+  amount      Float
+  method      String // เช่น "Credit Card", "Bank Transfer"
+  status      String // เช่น "Success", "Failed"
+  createdAt   DateTime @default(now())
+}
+model CouponPromotion { // แก้ชื่อตาราง
+  id          String   @id @default(uuid())
+  code        String   @unique
+  discount    Float
+  type        String // "fixed" หรือ "percentage"
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+}
