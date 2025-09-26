@@ -33,6 +33,29 @@ const navItems: NavItem[] = [
     subItems: [{ name: "Ecommerce", path: "/", pro: false }],
   },
   {
+    icon: <BoxCubeIcon/>,
+    name: "Products",
+    subItems: [{name: "Games List", path: "/game", pro: false},{name: "Key games", path: "/keys",pro:false}]
+  },
+  {
+    icon: <UserCircleIcon/>,
+    name: "Users Customers",
+    subItems: [{name: "User List", path: "/users", pro: false},{name: "Add New User", path: "/users/add",pro:false}]
+  },
+  {
+    icon: <PageIcon/>,
+    name: "Orders",
+    path: "/orders",
+  },
+  {
+    icon: <PieChartIcon />,
+    name: "Marketing",
+    subItems: [
+      { name: "Email Subscribers", path: "/subscribers", pro: false },
+      { name: "Product Interests", path: "/interests", pro: false },
+    ],
+  },
+  {
     icon: <CalenderIcon />,
     name: "Calendar",
     path: "/calendar",
