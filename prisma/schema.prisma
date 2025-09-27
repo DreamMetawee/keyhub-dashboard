@@ -79,7 +79,8 @@ model GameKey {
   id        String   @id @default(uuid())
   key       String   @unique
   status    String   @default("Available") // สถานะ: "Available", "Sold"
-  
+  createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
+  updatedAt     DateTime    @updatedAt      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
   gameId    Int
   game      Game     @relation(fields: [gameId], references: [id])
   
@@ -98,7 +99,8 @@ model Cart {
 model CartItem {
   id        String   @id @default(uuid())
   quantity  Int
-  
+  createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
+  updatedAt     DateTime    @updatedAt      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
   cartId    String
   cart      Cart     @relation(fields: [cartId], references: [id])
   
@@ -114,7 +116,8 @@ model Order {
   orderDate      DateTime    @default(now())
   totalAmount    Float
   status         String      @default("Pending") // เช่น: "Pending", "Processing", "Completed"
-  
+  createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
+  updatedAt     DateTime    @updatedAt      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
   userId         String
   user           User        @relation(fields: [userId], references: [id])
 
@@ -127,7 +130,8 @@ model OrderItem {
   id        String   @id @default(uuid())
   quantity  Int
   pricePaid Float // ราคาที่ลูกค้าจ่าย
-
+  createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
+  updatedAt     DateTime    @updatedAt      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
   orderId   String
   order     Order    @relation(fields: [orderId], references: [id])
 

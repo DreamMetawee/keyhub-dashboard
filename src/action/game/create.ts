@@ -29,7 +29,7 @@ export async function createGame(formData: FormData) {
         category,
       },
     });
-    revalidatePath('/dashboard/games');
+    revalidatePath('/admin/game');
     return { success: true, message: `Game "${title}" created successfully.` };
   } catch (e) {
     console.error('Create Game Error:', e);

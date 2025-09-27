@@ -1,42 +1,48 @@
 // app/(admin)/game/page.tsx
+// **ไม่ต้องมี 'use client';**
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
-import { deleteGame } from '@/action/game/delete'; // Import Server Action สำหรับการลบ
-import { formatCurrency } from '@/lib/utils'; // สมมติว่ามี utility สำหรับการจัดรูปแบบเงิน
+import { deleteGame } from '@/action/game/delete';
+import { formatCurrency } from '@/lib/utils';
+import { DeleteButton } from '@/components/game/DeleteGameButton';
 
-// กำหนด Metadata สำหรับหน้านี้
+// 🚀 นำเข้าปุ่ม Client Component
+import { OpenModalButton } from '@/components/game/OpenModalButton';
+import { GameActionsButton } from '@/components/game/GameActionsButton';
+// ลบ import React, { useState } และ GameFormModal ทิ้ง
+
 export const metadata = {
   title: 'Game Management | Admin',
 };
 
-// Component หลักที่เป็น Server Component
+// Component หลักยังคงเป็น Server Component
 async function GameManagementPage() {
-  
-  // 1. READ: ดึงข้อมูลเกมทั้งหมด
+
+  // 1. READ: ดึงข้อมูลเกมทั้งหมด (ยังอยู่ที่ Server)
   const games = await prisma.game.findMany({
     orderBy: { createdAt: 'desc' },
+    include: {
+      _count: {
+        select: {
+          gameKeys: {
+            where: { status: 'Available' }
+          }
+        }
+      }
+    }
   });
-
-  // **********************************************
-  // ใน Template จริงของคุณ: คุณต้องแทนที่ Button, variant, และ Class Name 
-  // ให้ตรงกับ Component ของ TailAdmin ที่คุณใช้
-  // **********************************************
 
   return (
     <div className="flex flex-col gap-5 p-5">
-      
+
       {/* ส่วน Header และปุ่ม Create */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-black dark:text-white">
           Game Catalog Management ({games.length} Games)
         </h1>
-        {/* 2. CREATE: ปุ่มนำทางไปยังหน้าเพิ่มเกม */}
-        <Link href="/admin/game/add"> 
-          {/* ปรับ Link Path ให้ตรงกับโครงสร้างของคุณ เช่น /admin/game/add */}
-          <button className="bg-primary hover:bg-opacity-90 text-white rounded-md px-4 py-2 transition-all">
-            + Add New Game
-          </button>
-        </Link>
+
+        {/* 🚀 แทนที่ Link/Button ด้วย Client Component */}
+        <OpenModalButton />
       </div>
 
       {/* ตารางแสดงรายการเกม */}
@@ -66,54 +72,35 @@ async function GameManagementPage() {
                     <p className="inline-flex rounded-full bg-success bg-opacity-10 py-1 px-3 text-sm font-medium text-success">{game.category}</p>
                   </td>
                   <td className="py-5 px-4">
-                    {/* [TODO]: ต้องนับจำนวนคีย์ที่ Available (ต้องใช้ include หรือ count แยก) */}
-                    <span className="font-medium text-meta-5">N/A (Keys)</span> 
+                    {/* 🚀 ส่วนที่แก้ไข: แสดงจำนวนคีย์ที่นับได้ */}
+                    <span className="font-medium text-meta-5">
+                      {game._count.gameKeys}
+                    </span>
                   </td>
 
                   {/* 4. ACTIONS: Edit, View Keys, Delete */}
                   <td className="py-5 px-4 space-x-2 flex items-center">
-                    
-                    {/* Link แก้ไข (UPDATE) */}
-                    <Link href={`/admin/game/${game.id}/edit`}>
-                      <button className="text-primary border border-primary hover:bg-primary hover:text-white rounded-md px-3 py-1 text-sm transition-all">
-                        Edit
-                      </button>
-                    </Link>
-                    
-                    {/* Link จัดการคีย์ (VIEW DETAIL) */}
-                    <Link href={`/admin/game/${game.id}/keys`}>
-                      <button className="bg-meta-6 text-white hover:bg-meta-6/80 rounded-md px-3 py-1 text-sm transition-all">
-                        Keys
-                      </button>
-                    </Link>
-                    
-                    {/* ปุ่มลบ (DELETE) - ใช้ Client Handler */}
-                    <form
-                        style={{ display: 'inline-block' }}
-                        onSubmit={async (e) => {
-                            e.preventDefault();
-                            if (!confirm(`Are you sure you want to delete the game "${game.title}"?`)) {
-                                return;
-                            }
-                            const formData = new FormData(e.currentTarget);
-                            await deleteGame(formData);
-                            // Optionally, refresh or update UI here
-                        }}
-                    >
-                        <input type="hidden" name="gameId" value={game.id} />
-                        <button 
-                            type="submit" 
-                            className="text-white bg-danger hover:bg-danger/90 rounded-md px-3 py-1 text-sm transition-all"
-                        >
-                            Delete
-                        </button>
-                    </form>
+                    {/* 🚀 แทนที่ Link ด้วย GameActionsButton */}
+                    <GameActionsButton
+                      game={{
+                        id: game.id,
+                        title: game.title,
+                        slug: game.slug,
+                        price: game.price,
+                        discount: game.discount,
+                        imageUrl: game.imageUrl,
+                        category: game.category
+                      }}
+                    />
+
+                    {/* ปุ่มลบ (DELETE) - ใช้ Client Handler (ต้องเปลี่ยนฟอร์มนี้เป็น use client หรือใช้ Server Action ตรงๆ) */}
+                    <DeleteButton gameId={game.id} gameTitle={game.title} />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          
+
           {games.length === 0 && (
             <div className="py-10 text-center text-gray-500">
               No games found. Click "Add New Game" to get started.
