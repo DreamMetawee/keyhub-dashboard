@@ -1,6 +1,8 @@
 // src/app/api/games/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // 💡 ใช้ Prisma Client
+import Cors from "cors"
+
 
 // [GET] ดึงรายการเกมทั้งหมด
 export async function GET() {

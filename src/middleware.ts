@@ -2,6 +2,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 
+
 // 💡 กำหนด Origin ที่คุณอนุญาตให้เข้าถึง API ได้
 const allowedOrigins = [
   'http://localhost:3001', // Frontend Development Port ของคุณ
