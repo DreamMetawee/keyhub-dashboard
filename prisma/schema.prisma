@@ -17,7 +17,7 @@ datasource db {
 model User {
   id               String           @id @default(uuid())
   email            String           @unique
-  password         String // รหัสผ่านที่ถูก hash แล้ว
+  password         String           @db.Text// รหัสผ่านที่ถูก hash แล้ว
   name             String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
@@ -80,7 +80,7 @@ model GameKey {
   key       String   @unique
   status    String   @default("Available") // สถานะ: "Available", "Sold"
   createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
-  updatedAt     DateTime    @updatedAt      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
+  updatedAt     DateTime    @default(now())      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
   gameId    Int
   game      Game     @relation(fields: [gameId], references: [id])
   
