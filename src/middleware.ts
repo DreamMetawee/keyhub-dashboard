@@ -1,5 +1,7 @@
 // src/middleware.ts
 import { NextResponse, type NextRequest } from 'next/server';
+import cors from 'cors';
+
 
 const allowedOrigins = [
   'http://localhost:3000', // ✅ Port ของ frontend ที่ใช้จริง

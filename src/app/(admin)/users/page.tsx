@@ -12,7 +12,7 @@ export default async function UserManagementPage() {
     
     // 1. READ: ดึงข้อมูลผู้ใช้ทั้งหมด พร้อมจำนวน Subscription
     const users = await prisma.user.findMany({
-        orderBy: { createdAt: 'desc' },
+        orderBy: { id: 'desc' },
         // นับจำนวน Subscription ที่ Active ของผู้ใช้แต่ละคน
         include: {
             _count: {
@@ -67,7 +67,7 @@ export default async function UserManagementPage() {
                                     <td className="py-5 px-4 space-x-2 flex items-center">
                                         {/* 🆕 Component สำหรับลบผู้ใช้ */}
                                         <UserDeleteButton 
-                                            userId={user.id} 
+                                            userId={user.id.toString()} 
                                             userEmail={user.email} 
                                         />
                                     </td>

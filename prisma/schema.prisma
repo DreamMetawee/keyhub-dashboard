@@ -15,7 +15,7 @@ datasource db {
 // ตารางสำหรับ ระบบผู้ใช้ (Register/Login)
 // ------------------------------------
 model User {
-  id               String           @id @default(uuid())
+  id               Int              @id @default(autoincrement())
   email            String           @unique
   password         String           @db.Text// รหัสผ่านที่ถูก hash แล้ว
   name             String?
@@ -48,7 +48,7 @@ model Subscription {
   endDate   DateTime
   status    String   @default("Active") // สถานะ: "Active", "Expired", "Cancelled"
 
-  userId    String
+  userId    Int
   user      User     @relation(fields: [userId], references: [id])
   
   planId    String
@@ -76,7 +76,7 @@ model Game {
 }
 
 model GameKey {
-  id        String   @id @default(uuid())
+  id        Int   @id @default(autoincrement())
   key       String   @unique
   status    String   @default("Available") // สถานะ: "Available", "Sold"
   createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
@@ -90,7 +90,7 @@ model GameKey {
 
 model Cart {
   id        String   @id @default(uuid())
-  userId    String   @unique // แต่ละ user มีตะกร้าได้แค่ 1 ตะกร้า
+  userId    Int   @unique // แต่ละ user มีตะกร้าได้แค่ 1 ตะกร้า
   user      User     @relation(fields: [userId], references: [id])
   
   items     CartItem[]
@@ -118,8 +118,8 @@ model Order {
   status         String      @default("Pending") // เช่น: "Pending", "Processing", "Completed"
   createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
   updatedAt     DateTime    @updatedAt      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
-  userId         String
-  user           User        @relation(fields: [userId], references: [id])
+  userId         Int?
+  user           User?        @relation(fields: [userId], references: [id])
 
   items          OrderItem[]
 
@@ -139,7 +139,7 @@ model OrderItem {
   game      Game     @relation(fields: [gameId], references: [id])
   
   // การจัดการคีย์ที่ถูกขาย
-  gameKeyId String   @unique // แต่ละ OrderItem จะมี GameKey ได้แค่ 1 ตัว
+  gameKeyId  Int   @unique // แต่ละ OrderItem จะมี GameKey ได้แค่ 1 ตัว
   gameKey   GameKey  @relation(fields: [gameKeyId], references: [id])
 }
 
@@ -151,13 +151,15 @@ model EmailSubscriber {
   email        String   @unique
   subscribedAt DateTime @default(now())
   source       String? // เช่น: "Homepage", "CheckoutPage"
+  favoriteGenre String?
+  topics        String?
 }
 
 model ProductInterest {
   id           String   @id @default(uuid())
   interestType String   // ประเภทความสนใจ: "Viewed", "AddedToCart", "Purchased"
 
-  userId       String?
+  userId       Int?
   user         User?    @relation(fields: [userId], references: [id])
   
   gameId       Int

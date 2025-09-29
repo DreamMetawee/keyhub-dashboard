@@ -32,7 +32,7 @@ async function RecentKeyOrders() {
             {recentOrders.map((order) => (
               <tr key={order.id} className="hover:bg-gray-50">
                 <td className="py-2 px-4 border-b text-sm truncate max-w-xs">{order.id.substring(0, 8)}...</td>
-                <td className="py-2 px-4 border-b">{order.user.email}</td>
+                <td className="py-2 px-4 border-b">{order.user?.email ?? 'N/A'}</td>
                 <td className="py-2 px-4 border-b font-medium">{formatCurrency(order.totalAmount)}</td>
                 <td className="py-2 px-4 border-b">
                   <span className={`px-2 py-1 text-xs rounded-full ${

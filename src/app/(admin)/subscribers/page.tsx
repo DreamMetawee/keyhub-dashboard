@@ -1,18 +1,24 @@
-// app/(admin)/subscribers/page.tsx
 import prisma from '@/lib/prisma';
 import { format } from 'date-fns';
-import { SubscriberDeleteButton } from '@/components/subscriber/SubscriberDeleteButton'; // 🆕 Component ลบผู้สมัคร
+import { SubscriberDeleteButton } from '@/components/subscriber/SubscriberDeleteButton';
+// เดี๋ยวเราจะสร้าง Component นี้ในขั้นตอนถัดไป
+import { PromotionSender } from "@/components/subscriber/PromotionSender";
 
 export const metadata = {
     title: 'Email Subscribers | Admin',
 };
 
-// Component หลักที่เป็น Server Component
 export default async function SubscriberManagementPage() {
     
-    // 1. READ: ดึงข้อมูลผู้สมัครรับข่าวสารทั้งหมด
     const subscribers = await prisma.emailSubscriber.findMany({
         orderBy: { subscribedAt: 'desc' },
+        select: {
+            id: true,
+            email: true,
+            subscribedAt: true,
+            source: true,
+            favoriteGenre: true, // ✅ ดึงข้อมูล genre มาด้วย
+        },
     });
 
     const totalSubscribers = subscribers.length;
@@ -20,33 +26,42 @@ export default async function SubscriberManagementPage() {
     return (
         <div className="flex flex-col gap-5 p-5">
             
-            <h1 className="text-2xl font-bold text-black dark:text-white mb-6">
-                Email Subscribers List ({totalSubscribers} Total)
-            </h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-black dark:text-white">
+                    Email Subscribers ({totalSubscribers} Total)
+                </h1>
+                {/* ✅ เพิ่มปุ่มสำหรับส่งโปรโมชันตรงนี้ */}
+                <PromotionSender />
+            </div>
 
-            {/* ตารางแสดงรายการผู้สมัคร */}
-            <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-6">
+            <div className="rounded-sm border ...">
                 <div className="max-w-full overflow-x-auto">
                     <table className="w-full table-auto">
                         <thead>
                             <tr className="bg-gray-2 dark:bg-meta-4 text-left">
-                                <th className="min-w-[250px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">Email Address</th>
-                                <th className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white">Subscribed Date</th>
-                                <th className="py-4 px-4 font-medium text-black dark:text-white">Actions</th>
+                                <th className="py-4 px-4 font-medium ...">Email Address</th>
+                                {/* ✅ เพิ่ม Header ของคอลัมน์ใหม่ */}
+                                <th className="py-4 px-4 font-medium ...">Favorite Genre</th>
+                                <th className="py-4 px-4 font-medium ...">Subscribed Date</th>
+                                <th className="py-4 px-4 font-medium ...">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {subscribers.map((subscriber) => (
-                                <tr key={subscriber.id} className="border-b border-stroke dark:border-strokedark">
-                                    <td className="py-5 px-4 xl:pl-11 font-medium text-black dark:text-white">
+                                <tr key={subscriber.id} className="border-b ...">
+                                    <td className="py-5 px-4 ...">
                                         {subscriber.email}
+                                    </td>
+                                    {/* ✅ เพิ่ม Cell สำหรับแสดงข้อมูล Genre */}
+                                    <td className="py-5 px-4 ...">
+                                        <span className="bg-blue-100 text-blue-800 text-xs  font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                                            {subscriber.favoriteGenre || 'N/A'}
+                                        </span>
                                     </td>
                                     <td className="py-5 px-4 text-sm">
                                         {format(subscriber.subscribedAt, 'MMM dd, yyyy HH:mm')}
                                     </td>
-                                    
                                     <td className="py-5 px-4 space-x-2">
-                                        {/* 🆕 Component สำหรับลบ/ยกเลิกการสมัคร */}
                                         <SubscriberDeleteButton 
                                             subscriberId={subscriber.id} 
                                             subscriberEmail={subscriber.email} 
@@ -56,12 +71,6 @@ export default async function SubscriberManagementPage() {
                             ))}
                         </tbody>
                     </table>
-                    
-                    {totalSubscribers === 0 && (
-                        <div className="py-10 text-center text-gray-500">
-                            No one has subscribed to the mailing list yet.
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
