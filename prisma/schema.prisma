@@ -1,11 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// ตรวจสอบให้แน่ใจว่า provider เป็น "mysql" และ url ถูกต้อง
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
@@ -17,10 +13,9 @@ datasource db {
 model User {
   id               Int              @id @default(autoincrement())
   email            String           @unique
-  password         String           @db.Text// รหัสผ่านที่ถูก hash แล้ว
+  password         String           @db.Text
   name             String?
   createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
 
   // ความสัมพันธ์กับตารางอื่น ๆ
   subscriptions    Subscription[]
@@ -36,7 +31,7 @@ model SubscriptionPlan {
   id           String         @id @default(uuid())
   name         String         @unique
   price        Float
-  durationInDays Int // ระยะเวลาของแพลน (เป็นวัน)
+  durationInDays Int
   details      String?
   
   subscriptions Subscription[]
@@ -46,10 +41,10 @@ model Subscription {
   id        String   @id @default(uuid())
   startDate DateTime @default(now())
   endDate   DateTime
-  status    String   @default("Active") // สถานะ: "Active", "Expired", "Cancelled"
+  status    String   @default("Active")
 
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   planId    String
   plan      SubscriptionPlan @relation(fields: [planId], references: [id])
@@ -61,37 +56,34 @@ model Subscription {
 model Game {
   id            Int      @id @default(autoincrement())
   title         String
-  slug          String   @unique // ใช้สำหรับ URL
+  slug          String   @unique
   price         Float
   discount      Float    @default(0)
   imageUrl      String
   category      String
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
   
   gameKeys          GameKey[]
-  cartItems         CartItem[] // ปรับแก้
-  orderItems        OrderItem[] // ปรับแก้
-  productInterests  ProductInterest[] // ปรับแก้
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  productInterests  ProductInterest[]
 }
 
 model GameKey {
   id        Int   @id @default(autoincrement())
   key       String   @unique
-  status    String   @default("Available") // สถานะ: "Available", "Sold"
-  createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
-  updatedAt     DateTime    @default(now())      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
+  status    String   @default("Available")
+  createdAt DateTime @default(now())
   gameId    Int
   game      Game     @relation(fields: [gameId], references: [id])
   
-  // เชื่อมโยงกับ OrderItem เมื่อคีย์ถูกขาย
-  orderItem OrderItem[]
+  orderItem OrderItem?
 }
 
 model Cart {
   id        String   @id @default(uuid())
-  userId    Int   @unique // แต่ละ user มีตะกร้าได้แค่ 1 ตะกร้า
-  user      User     @relation(fields: [userId], references: [id])
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   items     CartItem[]
 }
@@ -99,88 +91,85 @@ model Cart {
 model CartItem {
   id        String   @id @default(uuid())
   quantity  Int
-  createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
-  updatedAt     DateTime    @updatedAt      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
+  createdAt DateTime @default(now())
   cartId    String
   cart      Cart     @relation(fields: [cartId], references: [id])
   
   gameId    Int
   game      Game     @relation(fields: [gameId], references: [id])
   
-  // ตรวจสอบว่าสินค้าชนิดเดียวกันไม่ถูกเพิ่มในตะกร้าซ้ำซ้อน
   @@unique([cartId, gameId])
 }
 
 model Order {
-  id             String      @id @default(uuid())
-  orderDate      DateTime    @default(now())
-  totalAmount    Float
-  status         String      @default("Pending") // เช่น: "Pending", "Processing", "Completed"
-  createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
-  updatedAt     DateTime    @updatedAt      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
-  userId         Int?
-  user           User?        @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid())
+  orderDate DateTime @default(now())
+  totalAmount Float
+  status    String   @default("Pending")
+  createdAt DateTime @default(now())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  items          OrderItem[]
-
-  Payment Payment[]
+  items     OrderItem[]
+  Payment   Payment[]
 }
 
 model OrderItem {
   id        String   @id @default(uuid())
   quantity  Int
-  pricePaid Float // ราคาที่ลูกค้าจ่าย
-  createdAt     DateTime    @default(now()) // ตั้งค่าเริ่มต้นเป็นเวลาที่สร้าง
-  updatedAt     DateTime    @updatedAt      // อัปเดตเวลาอัตโนมัติเมื่อมีการแก้ไข
+  pricePaid Float
+  createdAt DateTime @default(now())
+
   orderId   String
   order     Order    @relation(fields: [orderId], references: [id])
 
   gameId    Int
   game      Game     @relation(fields: [gameId], references: [id])
   
-  // การจัดการคีย์ที่ถูกขาย
-  gameKeyId  Int   @unique // แต่ละ OrderItem จะมี GameKey ได้แค่ 1 ตัว
-  gameKey   GameKey  @relation(fields: [gameKeyId], references: [id])
+  gameKeyId Int   @unique
+  gameKey   GameKey @relation(fields: [gameKeyId], references: [id])
 }
 
 // ------------------------------------
-// ตารางสำหรับ การตลาดดิจิทัล (Digital Marketing)
+// การตลาดดิจิทัล
 // ------------------------------------
 model EmailSubscriber {
   id           String   @id @default(uuid())
   email        String   @unique
   subscribedAt DateTime @default(now())
-  source       String? // เช่น: "Homepage", "CheckoutPage"
+  source       String?
   favoriteGenre String?
-  topics        String?
+  topics       String?
 }
 
 model ProductInterest {
   id           String   @id @default(uuid())
-  interestType String   // ประเภทความสนใจ: "Viewed", "AddedToCart", "Purchased"
+  interestType String
 
   userId       Int?
-  user         User?    @relation(fields: [userId], references: [id])
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   gameId       Int
   game         Game     @relation(fields: [gameId], references: [id])
 
   createdAt    DateTime @default(now())
 }
+
 model Payment {
   id          String   @id @default(uuid())
-  orderId     String   @unique // เชื่อมกับคำสั่งซื้อ
+  orderId     String   @unique
   order       Order    @relation(fields: [orderId], references: [id])
   amount      Float
-  method      String // เช่น "Credit Card", "Bank Transfer"
-  status      String // เช่น "Success", "Failed"
+  method      String
+  status      String
   createdAt   DateTime @default(now())
 }
-model CouponPromotion { // แก้ชื่อตาราง
-  id          String   @id @default(uuid())
-  code        String   @unique
-  discount    Float
-  type        String // "fixed" หรือ "percentage"
-  expiresAt   DateTime
-  isActive    Boolean  @default(true)
+
+model CouponPromotion {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  discount  Float
+  type      String
+  expiresAt DateTime
+  isActive  Boolean  @default(true)
 }

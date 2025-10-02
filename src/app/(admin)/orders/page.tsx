@@ -26,7 +26,7 @@ export default async function OrdersManagementPage() {
     
     // 1. READ: ดึงข้อมูลคำสั่งซื้อทั้งหมด
     const orders = await prisma.order.findMany({
-        orderBy: { orderDate: "desc" },
+        orderBy: { createdAt: "desc" },
         // รวมข้อมูลผู้ใช้ (Customer) ที่ทำการสั่งซื้อ
         include: {
             user: true, 

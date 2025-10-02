@@ -41,7 +41,7 @@ export function UserDeleteButton({ userId, userEmail }: UserDeleteButtonProps) {
             <input type="hidden" name="userId" value={userId} />
             <button 
                 type="submit" 
-                className="text-white bg-danger hover:bg-danger/90 rounded-md px-3 py-1 text-sm transition-all"
+                className="text-red-800 bg-danger hover:bg-danger/90 rounded-md px-3 py-1 text-sm transition-all"
             >
                 Delete
             </button>
